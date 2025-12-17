@@ -191,43 +191,60 @@ dropzone.ondrop=e=>{
 
 /* ================= SAVE PRODUCT ================= */
 document.getElementById("save").onclick = async () => {
-  const pid=pid.value.trim();
-  const name=pname.value.trim();
-  const priceVal=Number(price.value);
 
-  if(!pid||!name||!priceVal){
+  const pidEl   = document.getElementById("pid");
+  const nameEl  = document.getElementById("pname");
+  const priceEl = document.getElementById("price");
+  const desEl   = document.getElementById("des");
+
+  const pid   = pidEl.value.trim();
+  const name  = nameEl.value.trim();
+  const price = Number(priceEl.value);
+
+  if (!pid || !name || !price) {
     alert("Thiếu thông tin cơ bản");
     return;
   }
 
-  const product={
+  const product = {
     id: pid,
     name: name,
-    price: priceVal,
+    price: price,
     brand: getSelected("brandBox"),
     tags: getSelected("tagBox"),
     subtags: getSelected("subtagBox"),
     size: getSelected("sizeBox"),
-    materials: getSelected("materialBox").map(m=>({name:m,val:100})),
+    materials: getSelected("materialBox").map(m => ({
+      name: m,
+      val: 100
+    })),
     images: [],
-    des: des.value,
+    des: desEl.value,
     createdAt: new Date()
   };
 
-  try{
-    for(const f of files){
-      const rf=ref(storage,`products/${pid}/${Date.now()}_${f.name}`);
-      const snap=await uploadBytes(rf,f);
-      product.images.push(await getDownloadURL(snap.ref));
+  try {
+    for (const f of files) {
+      const rf = ref(
+        storage,
+        `products/${pid}/${Date.now()}_${f.name}`
+      );
+      const snap = await uploadBytes(rf, f);
+      product.images.push(
+        await getDownloadURL(snap.ref)
+      );
     }
-    await addDoc(collection(db,"products"),product);
+
+    await addDoc(collection(db, "products"), product);
     alert("LƯU THÀNH CÔNG");
     location.reload();
-  }catch(err){
+
+  } catch (err) {
     console.error(err);
     alert("LỖI FIREBASE");
   }
 };
+
 </script>
 </body>
 </html>
