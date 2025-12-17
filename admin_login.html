@@ -16,27 +16,24 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebas
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyBdEuAqxHxHaxE3lTCEOwH2YO8L2Jg4hlY",
-    authDomain: "dtorder-19c91.firebaseapp.com",
-    projectId: "dtorder-19c91",
-    storageBucket: "dtorder-19c91.firebasestorage.app",
-    messagingSenderId: "499125096462",
-    appId: "1:499125096462:web:5fc0f37019e018fd57ac5f"
+  apiKey: "AIzaSyBdEuAqxHxHaxE3lTCEOwH2YO8L2Jg4hlY",
+  authDomain: "dtorder-19c91.firebaseapp.com",
+  projectId: "dtorder-19c91",
+  storageBucket: "dtorder-19c91.firebasestorage.app",
+  messagingSenderId: "499125096462",
+  appId: "1:499125096462:web:5fc0f37019e018fd57ac5f"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 document.getElementById("loginBtn").onclick = () => {
-    let email = email.value;
-    let pass = password.value;
-    signInWithEmailAndPassword(auth, email, pass)
-    .then(() => {
-      window.location.href = "admin.html";
-    })
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  signInWithEmailAndPassword(auth, email, password)
+    .then(() => window.location.href = "admin.html")
     .catch(err => alert("Sai thông tin: " + err.message));
 };
 </script>
 
-</body>
-</html>
