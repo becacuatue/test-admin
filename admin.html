@@ -2,303 +2,170 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Admin Upload Sản Phẩm – Full Function</title>
+<title>Admin Upload Sản Phẩm</title>
+
 <style>
-.section-title {
-  font-weight: bold;
-  margin: 15px 0 5px;
-  color: #333;
-}
-button.primary {
-  background: #111;
-  color: #fff;
-  border-radius: 6px;
-}
-button.primary:hover {
-  background: #000;
-}
-.preview img {
-  box-shadow: 0 4px 10px rgba(0,0,0,.15);
-}
- body { font-family: Arial; padding: 20px; }
- #dropzone { width: 100%; padding: 30px; border: 2px dashed #999; text-align: center; margin-bottom: 10px; }
- .preview img { width: 120px; border-radius: 10px; margin-right: 10px; }
- input, textarea, select { width: 100%; margin-top: 10px; padding: 8px; }
- .row { display: flex; gap: 10px; }
- .row input, .row select { flex: 1; }
- .section-box { border: 1px solid #ccc; padding: 10px; border-radius: 6px; margin: 10px 0; }
- .tag-list, .subtag-list, .material-list, .brand-list { display: flex; flex-wrap: wrap; gap: 10px; }
- label { display: flex; align-items: center; gap: 5px; }
- button { padding: 10px 15px; margin-top: 10px; cursor: pointer; }
- .template-item { border: 1px solid #aaa; padding: 10px; border-radius: 6px; margin: 5px 0; }
+body { font-family: Arial; padding: 20px; }
+.section-box { border: 1px solid #ccc; padding: 10px; border-radius: 6px; margin: 10px 0; }
+#dropzone { width: 100%; padding: 30px; border: 2px dashed #999; text-align: center; }
+.preview img { width: 120px; margin: 5px; border-radius: 8px; }
+input, textarea { width: 100%; margin-top: 10px; padding: 8px; }
+.row { display: flex; gap: 10px; }
+.row input { flex: 1; }
+button { padding: 10px 15px; margin-top: 10px; cursor: pointer; }
+.primary { background:#111;color:#fff;border-radius:6px }
+.primary:hover { background:#000 }
 </style>
 </head>
-<body>
-<h2>Trang Admin – Upload Sản Phẩm (FULL FUNCTION)</h2>
 
-<h3>Kéo thả ảnh sản phẩm (tối đa 5 ảnh)</h3>
-<div id="dropzone">Kéo thả ảnh vào đây</div>
+<body>
+<h2>ADMIN – UPLOAD SẢN PHẨM</h2>
+<div id="dropzone">Kéo thả ảnh (tối đa 5)</div>
 <div class="preview" id="preview"></div>
 
 <input id="id" placeholder="ID sản phẩm (vd: 36)">
 <input id="name" placeholder="Tên sản phẩm">
 <input id="price" type="number" placeholder="Giá">
 
-<!-- BRAND -->
 <div class="section-box">
- <h4>Brand</h4>
- <div class="brand-list" id="brandList"></div>
- <input id="newBrand" placeholder="Thêm brand mới">
- <button onclick="addBrand()">Thêm Brand</button>
+<h4>Brand (cách nhau bằng dấu ,)</h4>
+<input id="brandInput" placeholder="Nike, Adidas">
 </div>
 
-<!-- TAGS -->
 <div class="section-box">
- <h4>Tags</h4>
- <div class="tag-list" id="tagList"></div>
- <input id="newTag" placeholder="Thêm tag mới">
- <button onclick="addTag()">Thêm Tag</button>
+<h4>Tags</h4>
+<input id="tagInput" placeholder="Áo, Giày">
 </div>
 
-<!-- SUBTAGS -->
 <div class="section-box">
- <h4>Subtags</h4>
- <div class="subtag-list" id="subtagList"></div>
- <input id="newSubtag" placeholder="Thêm subtag mới">
- <button onclick="addSubtag()">Thêm Subtag</button>
+<h4>Subtags</h4>
+<input id="subtagInput" placeholder="Jordan 1, Puffer">
 </div>
 
-<!-- MATERIALS -->
 <div class="section-box">
- <h4>Materials</h4>
- <div class="material-list" id="materialList"></div>
- <div class="row">
-   <input id="newMaterialName" placeholder="Tên chất liệu">
-   <input id="newMaterialValue" type="number" placeholder="%">
- </div>
- <button onclick="addMaterial()">Thêm Material</button>
+<h4>Materials</h4>
+<div class="row">
+<input id="materialName" placeholder="Cotton">
+<input id="materialValue" type="number" placeholder="%">
+</div>
+<button onclick="addMaterial()">Thêm Material</button>
+<div id="materialList"></div>
 </div>
 
-<!-- RATINGS -->
 <div class="section-box">
- <h4>Ratings</h4>
- <label>Độ bền: <input id="rate_doben" type="number" value="8"></label>
- <label>Chất lượng: <input id="rate_chatluong" type="number" value="8"></label>
- <label>Tương đồng: <input id="rate_tuongdong" type="number" value="8"></label>
- <label>Độ Hiếm: <input id="rate_dohiem" type="number" value="7"></label>
+<h4>Ratings</h4>
+<input id="rate_doben" type="number" value="8" placeholder="Độ bền">
+<input id="rate_chatluong" type="number" value="8" placeholder="Chất lượng">
+<input id="rate_tuongdong" type="number" value="8" placeholder="Tương đồng">
+<input id="rate_dohiem" type="number" value="7" placeholder="Độ hiếm">
 </div>
 
 <input id="size" placeholder='Size ["S","M","L","XL"]'>
-<textarea id="des" rows="6" placeholder="Mô tả sản phẩm"></textarea>
+<textarea id="des" rows="5" placeholder="Mô tả"></textarea>
 
-<button id="save" class="primary">Lưu sản phẩm lên Firebase</button>
-<button id="saveTemplate">Lưu thành mẫu</button>
-
-<h3>Danh sách mẫu đã lưu</h3>
-<div id="templateList"></div>
+<button id="save" class="primary">LƯU SẢN PHẨM</button>
 <button onclick="logout()">Đăng xuất</button>
 
 <script>
-let brands = ["Nike", "Adidas", "Corteiz", "New Balance"];
-let tags = ["Order", "Áo", "Giày", "Quần", "Hoodie"];
-let subtags = ["Puffer", "Jordan 1", "Air Force", "Sweater", "Tech Fleece"];
-let materials = [];
-let savedTemplates = [];
+/* ===== IMAGE HANDLER ===== */
+let files=[];
+dropzone.ondragover=e=>e.preventDefault();
+dropzone.ondrop=e=>{
+ e.preventDefault();
+ files=[...e.dataTransfer.files].slice(0,5);
+ preview.innerHTML="";
+ files.forEach(f=>{
+   let img=document.createElement("img");
+   img.src=URL.createObjectURL(f);
+   preview.appendChild(img);
+ });
+};
 
-function renderList(list, holderId, type) {
- let holder = document.getElementById(holderId);
- holder.innerHTML = "";
- list.forEach(item => {
-   holder.innerHTML += `<label><input type='checkbox' value="${item}" class="cb-${type}"> ${item}</label>`;
+/* ===== MATERIAL ===== */
+let materials=[];
+function addMaterial(){
+ let n=materialName.value.trim();
+ let v=Number(materialValue.value);
+ if(!n||!v) return;
+ materials.push({name:n,value:v});
+ renderMaterial();
+ materialName.value="";
+ materialValue.value="";
+}
+function renderMaterial(){
+ materialList.innerHTML="";
+ materials.forEach(m=>{
+   materialList.innerHTML+=`<div>${m.name}: ${m.value}%</div>`;
  });
 }
-renderList(brands, "brandList", "brand");
-renderList(tags, "tagList", "tag");
-renderList(subtags, "subtagList", "subtag");
+</script>
 
-function addBrand(){let v=newBrand.value.trim(); if(!v) return; brands.push(v); renderList(brands,"brandList","brand"); newBrand.value="";}
-function addTag(){let v=newTag.value.trim(); if(!v) return; tags.push(v); renderList(tags,"tagList","tag"); newTag.value="";}
-function addSubtag(){let v=newSubtag.value.trim(); if(!v) return; subtags.push(v); renderList(subtags,"subtagList","subtag"); newSubtag.value="";}
+<!-- ===== FIREBASE ===== -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+import { getAuth,onAuthStateChanged,signOut } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+import { getFirestore,collection,addDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+import { getStorage,ref,uploadBytes,getDownloadURL } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-storage.js";
 
-function addMaterial(){let name=newMaterialName.value.trim(); let val=Number(newMaterialValue.value); if(!name||!val) return; materials.push({name,val}); displayMaterials(); newMaterialName.value=""; newMaterialValue.value="";}
-function displayMaterials(){ let holder=document.getElementById("materialList"); holder.innerHTML=""; materials.forEach(m=>{ holder.innerHTML+=`<div>${m.name}: ${m.val}%</div>`;}); }
+const firebaseConfig = {
+ apiKey: "AIzaSyBdEuAqxHxHaxE3lTCEOwH2YO8L2Jg4hlY",
+ authDomain: "dtorder-19c91.firebaseapp.com",
+ projectId: "dtorder-19c91",
+ storageBucket: "dtorder-19c91.appspot.com",
+ messagingSenderId: "499125096462",
+ appId: "1:499125096462:web:5fc0f37019e018fd57ac5f"
+};
 
-let files=[];
-dropzone.addEventListener("dragover", e=>e.preventDefault());
-dropzone.addEventListener("drop", e=>{
- e.preventDefault(); files=[...e.dataTransfer.files]; preview.innerHTML="";
- files.forEach(f=>{let img=document.createElement("img"); img.src=URL.createObjectURL(f); preview.appendChild(img);});
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+const storage=getStorage(app);
+
+onAuthStateChanged(auth,u=>{
+ if(!u) location.href="admin_login.html";
 });
 
-function renderTemplates(){
- let box=document.getElementById("templateList");
- box.innerHTML="";
- savedTemplates.forEach((t,i)=>{
-   box.innerHTML += `
-     <div class='template-item'>
-       <b>Mẫu #${i+1}</b><br>
-       Brand: ${t.brand.join(', ')}<br>
-       Tags: ${t.tags.join(', ')}<br>
-       Subtags: ${t.subtags.join(', ')}<br>
-       <button onclick="applyTemplate(${i})">Dùng Mẫu</button>
-       <button onclick="deleteTemplate(${i})">Xóa</button>
-     </div>
-   `;
- });
-}
-function applyTemplate(i){
- let t=savedTemplates[i];
+window.logout=()=>signOut(auth).then(()=>location.href="admin_login.html");
 
- document.querySelectorAll('.cb-brand').forEach(c=>c.checked = t.brand.includes(c.value));
- document.querySelectorAll('.cb-tag').forEach(c=>c.checked = t.tags.includes(c.value));
- document.querySelectorAll('.cb-subtag').forEach(c=>c.checked = t.subtags.includes(c.value));
- materials = [...t.materials];
- displayMaterials();
- rate_doben.value = t.ratings.doben;
- rate_chatluong.value = t.ratings.chatluong;
- rate_tuongdong.value = t.ratings.tuongdong;
- rate_dohiem.value = t.ratings.dohiem;
-}
-function deleteTemplate(i){ savedTemplates.splice(i,1); renderTemplates(); }
+document.getElementById("save").onclick=async()=>{
+ if(!files.length) return alert("Chưa có ảnh");
 
-document.getElementById("saveTemplate").onclick = () => {
- let chosenBrand=[...document.querySelectorAll('.cb-brand:checked')].map(c=>c.value);
- let chosenTags=[...document.querySelectorAll('.cb-tag:checked')].map(c=>c.value);
- let chosenSubtags=[...document.querySelectorAll('.cb-subtag:checked')].map(c=>c.value);
- if(!chosenBrand.length&&!chosenTags.length&&!chosenSubtags.length){alert("Chọn brand/tag/subtag!");return;}
- let template={brand:chosenBrand, tags:chosenTags, subtags:chosenSubtags, materials:materials, ratings:{doben:rate_doben.value,chatluong:rate_chatluong.value,tuongdong:rate_tuongdong.value,dohiem:rate_dohiem.value}};
- savedTemplates.push(template);
- renderTemplates();
- alert("Đã lưu mẫu!");
+ const product={
+   id:id.value.trim(),
+   name:name.value.trim(),
+   price:Number(price.value),
+   brand:brandInput.value.split(",").map(v=>v.trim()).filter(Boolean),
+   tags:tagInput.value.split(",").map(v=>v.trim()).filter(Boolean),
+   subtags:subtagInput.value.split(",").map(v=>v.trim()).filter(Boolean),
+   materials,
+   ratings:{
+     doben:+rate_doben.value,
+     chatluong:+rate_chatluong.value,
+     tuongdong:+rate_tuongdong.value,
+     dohiem:+rate_dohiem.value
+   },
+   size:JSON.parse(size.value||"[]"),
+   des:des.value,
+   images:[],
+   createdAt:new Date()
+ };
+
+ try{
+   for(let f of files){
+     let r=ref(storage,`products/${product.id}/${Date.now()}_${f.name}`);
+     let snap=await uploadBytes(r,f);
+     product.images.push(await getDownloadURL(snap.ref));
+   }
+
+   await addDoc(collection(db,"products"),product);
+   alert("LƯU THÀNH CÔNG");
+   location.reload();
+ }catch(e){
+   console.error(e);
+   alert("LỖI UPLOAD");
+ }
 };
 </script>
 </body>
 </html>
-
-<!-- Firebase Integration -->
-<script type="module">
-import {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-storage.js";
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-import { 
-  getAuth, 
-  onAuthStateChanged, 
-  signOut 
-} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
-import { 
-  getFirestore, 
-  collection, 
-  addDoc, 
-  getDocs, 
-  deleteDoc, 
-  doc 
-} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBdEuAqxHxHaxE3lTCEOwH2YO8L2Jg4hlY",
-  authDomain: "dtorder-19c91.firebaseapp.com",
-  projectId: "dtorder-19c91",
-  storageBucket: "dtorder-19c91.appspot.com",
-  messagingSenderId: "499125096462",
-  appId: "1:499125096462:web:5fc0f37019e018fd57ac5f"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
-
-
-/* ====== AUTH GUARD ====== */
-onAuthStateChanged(auth, user => {
-  if (!user) {
-    window.location.href = "admin_login.html";
-  }
-});
-
-/* ====== LOGOUT (PHẢI GẮN WINDOW) ====== */
-window.logout = () => {
-  signOut(auth).then(() => {
-    window.location.href = "admin_login.html";
-  });
-};
-
-/* ====== FIRESTORE TEMPLATE ====== */
-window.saveTemplateToFirebase = async (template) => {
-  await addDoc(collection(db, "templates"), template);
-  alert("Đã lưu mẫu lên Firebase!");
-};
-
-window.loadTemplatesFromFirebase = async () => {
-  const snap = await getDocs(collection(db, "templates"));
-  savedTemplates = [];
-  snap.forEach(d => savedTemplates.push({ id: d.id, ...d.data() }));
-  renderTemplates();
-};
-
-window.deleteTemplateFromFirebase = async (id) => {
-  await deleteDoc(doc(db, "templates", id));
-  loadTemplatesFromFirebase();
-};
-document.getElementById("save").onclick = async () => {
-  if (!files.length) {
-    alert("Chưa chọn ảnh!");
-    return;
-  }
-
-  /* ===== COLLECT DATA ===== */
-  const product = {
-    id: id.value.trim(),
-    name: name.value.trim(),
-    price: Number(price.value),
-    brand: [...document.querySelectorAll(".cb-brand:checked")].map(c => c.value),
-    tags: [...document.querySelectorAll(".cb-tag:checked")].map(c => c.value),
-    subtags: [...document.querySelectorAll(".cb-subtag:checked")].map(c => c.value),
-    materials,
-    ratings: {
-      doben: Number(rate_doben.value),
-      chatluong: Number(rate_chatluong.value),
-      tuongdong: Number(rate_tuongdong.value),
-      dohiem: Number(rate_dohiem.value)
-    },
-    size: JSON.parse(size.value || "[]"),
-    des: des.value,
-    images: [],
-    createdAt: new Date()
-  };
-
-  if (!product.id || !product.name || !product.price) {
-    alert("Thiếu thông tin cơ bản!");
-    return;
-  }
-
-  /* ===== UPLOAD IMAGES ===== */
-  try {
-    for (let i = 0; i < files.length && i < 5; i++) {
-      const fileRef = ref(
-        storage,
-        `products/${product.id}/${Date.now()}_${files[i].name}`
-      );
-      const snap = await uploadBytes(fileRef, files[i]);
-      const url = await getDownloadURL(snap.ref);
-      product.images.push(url);
-    }
-
-    /* ===== SAVE PRODUCT ===== */
-    await addDoc(collection(db, "products"), product);
-
-    alert("Đã lưu sản phẩm thành công!");
-    location.reload();
-  } catch (err) {
-    console.error(err);
-    alert("Lỗi upload sản phẩm!");
-  }
-};
-loadTemplatesFromFirebase();
-</script>
 
