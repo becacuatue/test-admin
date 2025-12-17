@@ -161,48 +161,66 @@ document.getElementById("saveTemplate").onclick = () => {
 
 <!-- Firebase Integration -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+import { 
+  getAuth, 
+  onAuthStateChanged, 
+  signOut 
+} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  getDocs, 
+  deleteDoc, 
+  doc 
+} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBdEuAqxHxHaxE3lTCEOwH2YO8L2Jg4hlY",
-    authDomain: "dtorder-19c91.firebaseapp.com",
-    projectId: "dtorder-19c91",
-    storageBucket: "dtorder-19c91.firebasestorage.app",
-    messagingSenderId: "499125096462",
-    appId: "1:499125096462:web:5fc0f37019e018fd57ac5f"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyBdEuAqxHxHaxE3lTCEOwH2YO8L2Jg4hlY",
+  authDomain: "dtorder-19c91.firebaseapp.com",
+  projectId: "dtorder-19c91",
+  storageBucket: "dtorder-19c91.firebasestorage.app",
+  messagingSenderId: "499125096462",
+  appId: "1:499125096462:web:5fc0f37019e018fd57ac5f"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-  onAuthStateChanged(auth, user => {
-    if (!user) {
-        window.location.href = "admin_login.html";
-    }
-    });
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-    // Logout
-    window.logout = () => {
-    signOut(auth).then(() => window.location.href = "admin_login.html");
-    };
-
-  async function saveTemplateToFirebase(template) {
-    await addDoc(collection(db, "templates"), template);
-    alert("Đã lưu mẫu lên Firebase!");
+/* ====== AUTH GUARD ====== */
+onAuthStateChanged(auth, user => {
+  if (!user) {
+    window.location.href = "admin_login.html";
   }
+});
 
-  async function loadTemplatesFromFirebase() {
-    const querySnapshot = await getDocs(collection(db, "templates"));
-    let list = [];
-    querySnapshot.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
-    renderTemplateList(list);
-  }
+/* ====== LOGOUT (PHẢI GẮN WINDOW) ====== */
+window.logout = () => {
+  signOut(auth).then(() => {
+    window.location.href = "admin_login.html";
+  });
+};
 
-  async function deleteTemplateFromFirebase(id) {
-    await deleteDoc(doc(db, "templates", id));
-    loadTemplatesFromFirebase();
-  }
+/* ====== FIRESTORE TEMPLATE ====== */
+window.saveTemplateToFirebase = async (template) => {
+  await addDoc(collection(db, "templates"), template);
+  alert("Đã lưu mẫu lên Firebase!");
+};
 
+window.loadTemplatesFromFirebase = async () => {
+  const snap = await getDocs(collection(db, "templates"));
+  savedTemplates = [];
+  snap.forEach(d => savedTemplates.push({ id: d.id, ...d.data() }));
+  renderTemplates();
+};
+
+window.deleteTemplateFromFirebase = async (id) => {
+  await deleteDoc(doc(db, "templates", id));
   loadTemplatesFromFirebase();
+};
+
+loadTemplatesFromFirebase();
 </script>
+
