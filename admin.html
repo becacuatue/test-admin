@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Admin Upload Sản Phẩm – Full Function</title>
+<style>
+ body { font-family: Arial; padding: 20px; }
+ #dropzone { width: 100%; padding: 30px; border: 2px dashed #999; text-align: center; margin-bottom: 10px; }
+ .preview img { width: 120px; border-radius: 10px; margin-right: 10px; }
+ input, textarea, select { width: 100%; margin-top: 10px; padding: 8px; }
+ .row { display: flex; gap: 10px; }
+ .row input, .row select { flex: 1; }
+ .section-box { border: 1px solid #ccc; padding: 10px; border-radius: 6px; margin: 10px 0; }
+ .tag-list, .subtag-list, .material-list, .brand-list { display: flex; flex-wrap: wrap; gap: 10px; }
+ label { display: flex; align-items: center; gap: 5px; }
+ button { padding: 10px 15px; margin-top: 10px; cursor: pointer; }
+ .template-item { border: 1px solid #aaa; padding: 10px; border-radius: 6px; margin: 5px 0; }
+</style>
+</head>
+<body>
+<h2>Trang Admin – Upload Sản Phẩm (FULL FUNCTION)</h2>
+
+<h3>Kéo thả ảnh sản phẩm (tối đa 5 ảnh)</h3>
+<div id="dropzone">Kéo thả ảnh vào đây</div>
+<div class="preview" id="preview"></div>
+
+<input id="id" placeholder="ID sản phẩm (vd: 36)">
+<input id="name" placeholder="Tên sản phẩm">
+<input id="price" type="number" placeholder="Giá">
+
+<!-- BRAND -->
+<div class="section-box">
+ <h4>Brand</h4>
+ <div class="brand-list" id="brandList"></div>
+ <input id="newBrand" placeholder="Thêm brand mới">
+ <button onclick="addBrand()">Thêm Brand</button>
+</div>
+
+<!-- TAGS -->
+<div class="section-box">
+ <h4>Tags</h4>
+ <div class="tag-list" id="tagList"></div>
+ <input id="newTag" placeholder="Thêm tag mới">
+ <button onclick="addTag()">Thêm Tag</button>
+</div>
+
+<!-- SUBTAGS -->
+<div class="section-box">
+ <h4>Subtags</h4>
+ <div class="subtag-list" id="subtagList"></div>
+ <input id="newSubtag" placeholder="Thêm subtag mới">
+ <button onclick="addSubtag()">Thêm Subtag</button>
+</div>
+
+<!-- MATERIALS -->
+<div class="section-box">
+ <h4>Materials</h4>
+ <div class="material-list" id="materialList"></div>
+ <div class="row">
+   <input id="newMaterialName" placeholder="Tên chất liệu">
+   <input id="newMaterialValue" type="number" placeholder="%">
+ </div>
+ <button onclick="addMaterial()">Thêm Material</button>
+</div>
+
+<!-- RATINGS -->
+<div class="section-box">
+ <h4>Ratings</h4>
+ <label>Độ bền: <input id="rate_doben" type="number" value="8"></label>
+ <label>Chất lượng: <input id="rate_chatluong" type="number" value="8"></label>
+ <label>Tương đồng: <input id="rate_tuongdong" type="number" value="8"></label>
+ <label>Độ Hiếm: <input id="rate_dohiem" type="number" value="7"></label>
+</div>
+
+<input id="size" placeholder='Size ["S","M","L","XL"]'>
+<textarea id="des" rows="6" placeholder="Mô tả sản phẩm"></textarea>
+
+<button id="save">Lưu sản phẩm</button>
+<button id="saveTemplate">Lưu thành mẫu</button>
+
+<h3>Danh sách mẫu đã lưu</h3>
+<div id="templateList"></div>
+<button onclick="logout()">Đăng xuất</button>
+
+<script>
+let brands = ["Nike", "Adidas", "Corteiz", "New Balance"];
+let tags = ["Order", "Áo", "Giày", "Quần", "Hoodie"];
+let subtags = ["Puffer", "Jordan 1", "Air Force", "Sweater", "Tech Fleece"];
+let materials = [];
+let savedTemplates = [];
+
+function renderList(list, holderId, type) {
+ let holder = document.getElementById(holderId);
+ holder.innerHTML = "";
+ list.forEach(item => {
+   holder.innerHTML += `<label><input type='checkbox' value="${item}" class="cb-${type}"> ${item}</label>`;
+ });
+}
+renderList(brands, "brandList", "brand");
+renderList(tags, "tagList", "tag");
+renderList(subtags, "subtagList", "subtag");
+
+function addBrand(){let v=newBrand.value.trim(); if(!v) return; brands.push(v); renderList(brands,"brandList","brand"); newBrand.value="";}
+function addTag(){let v=newTag.value.trim(); if(!v) return; tags.push(v); renderList(tags,"tagList","tag"); newTag.value="";}
+function addSubtag(){let v=newSubtag.value.trim(); if(!v) return; subtags.push(v); renderList(subtags,"subtagList","subtag"); newSubtag.value="";}
+
+function addMaterial(){let name=newMaterialName.value.trim(); let val=Number(newMaterialValue.value); if(!name||!val) return; materials.push({name,val}); displayMaterials(); newMaterialName.value=""; newMaterialValue.value="";}
+function displayMaterials(){ let holder=document.getElementById("materialList"); holder.innerHTML=""; materials.forEach(m=>{ holder.innerHTML+=`<div>${m.name}: ${m.val}%</div>`;}); }
+
+let files=[];
+dropzone.addEventListener("dragover", e=>e.preventDefault());
+dropzone.addEventListener("drop", e=>{
+ e.preventDefault(); files=[...e.dataTransfer.files]; preview.innerHTML="";
+ files.forEach(f=>{let img=document.createElement("img"); img.src=URL.createObjectURL(f); preview.appendChild(img);});
+});
+
+function renderTemplates(){
+ let box=document.getElementById("templateList");
+ box.innerHTML="";
+ savedTemplates.forEach((t,i)=>{
+   box.innerHTML += `
+     <div class='template-item'>
+       <b>Mẫu #${i+1}</b><br>
+       Brand: ${t.brand.join(', ')}<br>
+       Tags: ${t.tags.join(', ')}<br>
+       Subtags: ${t.subtags.join(', ')}<br>
+       <button onclick="applyTemplate(${i})">Dùng Mẫu</button>
+       <button onclick="deleteTemplate(${i})">Xóa</button>
+     </div>
+   `;
+ });
+}
+function applyTemplate(i){
+ let t=savedTemplates[i];
+
+ document.querySelectorAll('.cb-brand').forEach(c=>c.checked = t.brand.includes(c.value));
+ document.querySelectorAll('.cb-tag').forEach(c=>c.checked = t.tags.includes(c.value));
+ document.querySelectorAll('.cb-subtag').forEach(c=>c.checked = t.subtags.includes(c.value));
+ materials = [...t.materials];
+ displayMaterials();
+ rate_doben.value = t.ratings.doben;
+ rate_chatluong.value = t.ratings.chatluong;
+ rate_tuongdong.value = t.ratings.tuongdong;
+ rate_dohiem.value = t.ratings.dohiem;
+}
+function deleteTemplate(i){ savedTemplates.splice(i,1); renderTemplates(); }
+
+document.getElementById("saveTemplate").onclick = () => {
+ let chosenBrand=[...document.querySelectorAll('.cb-brand:checked')].map(c=>c.value);
+ let chosenTags=[...document.querySelectorAll('.cb-tag:checked')].map(c=>c.value);
+ let chosenSubtags=[...document.querySelectorAll('.cb-subtag:checked')].map(c=>c.value);
+ if(!chosenBrand.length&&!chosenTags.length&&!chosenSubtags.length){alert("Chọn brand/tag/subtag!");return;}
+ let template={brand:chosenBrand, tags:chosenTags, subtags:chosenSubtags, materials:materials, ratings:{doben:rate_doben.value,chatluong:rate_chatluong.value,tuongdong:rate_tuongdong.value,dohiem:rate_dohiem.value}};
+ savedTemplates.push(template);
+ renderTemplates();
+ alert("Đã lưu mẫu!");
+};
+</script>
+</body>
+</html>
+
+<!-- Firebase Integration -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBdEuAqxHxHaxE3lTCEOwH2YO8L2Jg4hlY",
+    authDomain: "dtorder-19c91.firebaseapp.com",
+    projectId: "dtorder-19c91",
+    storageBucket: "dtorder-19c91.firebasestorage.app",
+    messagingSenderId: "499125096462",
+    appId: "1:499125096462:web:5fc0f37019e018fd57ac5f"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+  onAuthStateChanged(auth, user => {
+    if (!user) {
+        window.location.href = "admin_login.html";
+    }
+    });
+
+    // Logout
+    window.logout = () => {
+    signOut(auth).then(() => window.location.href = "admin_login.html");
+    };
+
+  async function saveTemplateToFirebase(template) {
+    await addDoc(collection(db, "templates"), template);
+    alert("Đã lưu mẫu lên Firebase!");
+  }
+
+  async function loadTemplatesFromFirebase() {
+    const querySnapshot = await getDocs(collection(db, "templates"));
+    let list = [];
+    querySnapshot.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
+    renderTemplateList(list);
+  }
+
+  async function deleteTemplateFromFirebase(id) {
+    await deleteDoc(doc(db, "templates", id));
+    loadTemplatesFromFirebase();
+  }
+
+  loadTemplatesFromFirebase();
+</script>
