@@ -5,18 +5,19 @@
 <title>Admin – Product Manager</title>
 
 <style>
-body { font-family: Arial; padding: 20px; background:#f7f7f7 }
-h2 { margin-bottom: 10px }
+body { font-family: Arial; padding:20px; background:#f7f7f7 }
+h2 { margin-bottom:10px }
 .section { background:#fff; padding:15px; border-radius:8px; margin-bottom:15px }
-button { padding:8px 12px; border-radius:6px; border:none; cursor:pointer }
+button { padding:10px 14px; border-radius:6px; border:none; cursor:pointer }
 button.primary { background:#111; color:#fff }
-.toggle-group { display:flex; flex-wrap:wrap; gap:8px }
+.toggle-group { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px }
 .toggle {
-  padding:6px 12px;
+  padding:6px 14px;
   border:1px solid #ccc;
   border-radius:20px;
   cursor:pointer;
   background:#f5f5f5;
+  user-select:none;
 }
 .toggle.active {
   background:#111;
@@ -25,17 +26,16 @@ button.primary { background:#111; color:#fff }
 }
 #dropzone {
   border:2px dashed #999;
-  padding:25px;
+  padding:30px;
   text-align:center;
   margin-bottom:10px;
 }
 .preview img {
-  width:100px;
+  width:90px;
   border-radius:8px;
   margin-right:8px;
 }
 input, textarea { width:100%; padding:8px; margin-top:8px }
-.row { display:flex; gap:10px }
 </style>
 </head>
 
@@ -45,7 +45,7 @@ input, textarea { width:100%; padding:8px; margin-top:8px }
 
 <div class="section">
   <div id="dropzone">Kéo thả ảnh (tối đa 5)</div>
-  <div class="preview" id="preview"></div>
+  <div id="preview" class="preview"></div>
 </div>
 
 <div class="section">
@@ -56,37 +56,47 @@ input, textarea { width:100%; padding:8px; margin-top:8px }
 
 <div class="section">
   <h4>Brand</h4>
+  <input placeholder="Nhập brand và Enter"
+         onkeydown="addOption(event,'brandBox')">
   <div id="brandBox" class="toggle-group"></div>
 </div>
 
 <div class="section">
   <h4>Tags</h4>
+  <input placeholder="Nhập tag và Enter"
+         onkeydown="addOption(event,'tagBox')">
   <div id="tagBox" class="toggle-group"></div>
 </div>
 
 <div class="section">
   <h4>Subtags</h4>
+  <input placeholder="Nhập subtag và Enter"
+         onkeydown="addOption(event,'subtagBox')">
   <div id="subtagBox" class="toggle-group"></div>
 </div>
 
 <div class="section">
   <h4>Size</h4>
+  <input placeholder="Nhập size và Enter"
+         onkeydown="addOption(event,'sizeBox')">
   <div id="sizeBox" class="toggle-group"></div>
 </div>
 
 <div class="section">
   <h4>Materials</h4>
+  <input placeholder="Nhập chất liệu và Enter"
+         onkeydown="addOption(event,'materialBox')">
   <div id="materialBox" class="toggle-group"></div>
 </div>
 
 <div class="section">
-  <textarea id="des" rows="5" placeholder="Mô tả"></textarea>
+  <textarea id="des" rows="4" placeholder="Mô tả sản phẩm"></textarea>
 </div>
 
-<button id="save" class="primary">LƯU SẢN PHẨM</button>
+<button class="primary" id="save">LƯU SẢN PHẨM</button>
 
 <script type="module">
-/* ===== FIREBASE ===== */
+/* ================= FIREBASE ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-storage.js";
@@ -104,51 +114,65 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-/* ===== UTILS ===== */
-const uniq = arr => [...new Set(arr)];
-
-function renderToggle(list, boxId) {
+/* ================= TOGGLE UTILS ================= */
+function createToggle(boxId, value) {
   const box = document.getElementById(boxId);
-  box.innerHTML = "";
-  list.forEach(v => {
-    const btn = document.createElement("div");
-    btn.className = "toggle";
-    btn.textContent = v;
-    btn.onclick = () => btn.classList.toggle("active");
-    box.appendChild(btn);
-  });
+  if (!box) return;
+
+  value = value.trim();
+  if (!value) return;
+
+  const exists = [...box.children]
+    .some(el => el.dataset.value === value);
+  if (exists) return;
+
+  const btn = document.createElement("div");
+  btn.className = "toggle";
+  btn.textContent = value;
+  btn.dataset.value = value;
+  btn.onclick = () => btn.classList.toggle("active");
+
+  box.appendChild(btn);
 }
+
+window.addOption = (e, boxId) => {
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  createToggle(boxId, e.target.value);
+  e.target.value = "";
+};
 
 function getSelected(boxId) {
   return [...document.querySelectorAll(`#${boxId} .toggle.active`)]
-    .map(b => b.textContent);
+    .map(b => b.dataset.value);
 }
 
-/* ===== LOAD OPTIONS FROM PRODUCTS ===== */
+/* ================= LOAD OPTIONS FROM DB ================= */
+const uniq = arr => [...new Set(arr)];
+
 async function loadOptions() {
-  const snap = await getDocs(collection(db, "products"));
+  const snap = await getDocs(collection(db,"products"));
 
   let brands=[], tags=[], subtags=[], sizes=[], materials=[];
 
-  snap.forEach(d => {
-    const p = d.data();
+  snap.forEach(doc => {
+    const p = doc.data();
     brands.push(...(p.brand||[]));
     tags.push(...(p.tags||[]));
     subtags.push(...(p.subtags||[]));
     sizes.push(...(p.size||[]));
-    (p.materials||[]).forEach(m => materials.push(m.name));
+    (p.materials||[]).forEach(m=>materials.push(m.name));
   });
 
-  renderToggle(uniq(brands), "brandBox");
-  renderToggle(uniq(tags), "tagBox");
-  renderToggle(uniq(subtags), "subtagBox");
-  renderToggle(uniq(sizes), "sizeBox");
-  renderToggle(uniq(materials), "materialBox");
+  uniq(brands).forEach(v=>createToggle("brandBox",v));
+  uniq(tags).forEach(v=>createToggle("tagBox",v));
+  uniq(subtags).forEach(v=>createToggle("subtagBox",v));
+  uniq(sizes).forEach(v=>createToggle("sizeBox",v));
+  uniq(materials).forEach(v=>createToggle("materialBox",v));
 }
-
 loadOptions();
 
-/* ===== IMAGE DROP ===== */
+/* ================= IMAGE DROP ================= */
 let files=[];
 const dropzone=document.getElementById("dropzone");
 const preview=document.getElementById("preview");
@@ -165,21 +189,21 @@ dropzone.ondrop=e=>{
   });
 };
 
-/* ===== SAVE PRODUCT ===== */
+/* ================= SAVE PRODUCT ================= */
 document.getElementById("save").onclick = async () => {
-  const pidEl = document.getElementById("pid");
-  const nameEl = document.getElementById("pname");
-  const priceEl = document.getElementById("price");
+  const pid=pid.value.trim();
+  const name=pname.value.trim();
+  const priceVal=Number(price.value);
 
-  if (!pidEl.value || !nameEl.value || !priceEl.value) {
+  if(!pid||!name||!priceVal){
     alert("Thiếu thông tin cơ bản");
     return;
   }
 
-  const product = {
-    id: pidEl.value.trim(),
-    name: nameEl.value.trim(),
-    price: Number(priceEl.value),
+  const product={
+    id: pid,
+    name: name,
+    price: priceVal,
     brand: getSelected("brandBox"),
     tags: getSelected("tagBox"),
     subtags: getSelected("subtagBox"),
@@ -190,20 +214,21 @@ document.getElementById("save").onclick = async () => {
     createdAt: new Date()
   };
 
-  try {
-    for (let f of files) {
-      const rf = ref(storage, `products/${product.id}/${Date.now()}_${f.name}`);
-      const snap = await uploadBytes(rf, f);
+  try{
+    for(const f of files){
+      const rf=ref(storage,`products/${pid}/${Date.now()}_${f.name}`);
+      const snap=await uploadBytes(rf,f);
       product.images.push(await getDownloadURL(snap.ref));
     }
     await addDoc(collection(db,"products"),product);
     alert("LƯU THÀNH CÔNG");
     location.reload();
-  } catch(e){
-    console.error(e);
+  }catch(err){
+    console.error(err);
     alert("LỖI FIREBASE");
   }
 };
 </script>
 </body>
 </html>
+
