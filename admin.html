@@ -4,6 +4,22 @@
 <meta charset="UTF-8">
 <title>Admin Upload Sản Phẩm – Full Function</title>
 <style>
+.section-title {
+  font-weight: bold;
+  margin: 15px 0 5px;
+  color: #333;
+}
+button.primary {
+  background: #111;
+  color: #fff;
+  border-radius: 6px;
+}
+button.primary:hover {
+  background: #000;
+}
+.preview img {
+  box-shadow: 0 4px 10px rgba(0,0,0,.15);
+}
  body { font-family: Arial; padding: 20px; }
  #dropzone { width: 100%; padding: 30px; border: 2px dashed #999; text-align: center; margin-bottom: 10px; }
  .preview img { width: 120px; border-radius: 10px; margin-right: 10px; }
@@ -75,7 +91,7 @@
 <input id="size" placeholder='Size ["S","M","L","XL"]'>
 <textarea id="des" rows="6" placeholder="Mô tả sản phẩm"></textarea>
 
-<button id="save">Lưu sản phẩm</button>
+<button id="save" class="primary">Lưu sản phẩm lên Firebase</button>
 <button id="saveTemplate">Lưu thành mẫu</button>
 
 <h3>Danh sách mẫu đã lưu</h3>
@@ -161,6 +177,13 @@ document.getElementById("saveTemplate").onclick = () => {
 
 <!-- Firebase Integration -->
 <script type="module">
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-storage.js";
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
 import { 
   getAuth, 
@@ -180,7 +203,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyBdEuAqxHxHaxE3lTCEOwH2YO8L2Jg4hlY",
   authDomain: "dtorder-19c91.firebaseapp.com",
   projectId: "dtorder-19c91",
-  storageBucket: "dtorder-19c91.firebasestorage.app",
+  storageBucket: "dtorder-19c91.appspot.com",
   messagingSenderId: "499125096462",
   appId: "1:499125096462:web:5fc0f37019e018fd57ac5f"
 };
@@ -188,6 +211,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
+
 
 /* ====== AUTH GUARD ====== */
 onAuthStateChanged(auth, user => {
@@ -220,7 +245,60 @@ window.deleteTemplateFromFirebase = async (id) => {
   await deleteDoc(doc(db, "templates", id));
   loadTemplatesFromFirebase();
 };
+document.getElementById("save").onclick = async () => {
+  if (!files.length) {
+    alert("Chưa chọn ảnh!");
+    return;
+  }
 
+  /* ===== COLLECT DATA ===== */
+  const product = {
+    id: id.value.trim(),
+    name: name.value.trim(),
+    price: Number(price.value),
+    brand: [...document.querySelectorAll(".cb-brand:checked")].map(c => c.value),
+    tags: [...document.querySelectorAll(".cb-tag:checked")].map(c => c.value),
+    subtags: [...document.querySelectorAll(".cb-subtag:checked")].map(c => c.value),
+    materials,
+    ratings: {
+      doben: Number(rate_doben.value),
+      chatluong: Number(rate_chatluong.value),
+      tuongdong: Number(rate_tuongdong.value),
+      dohiem: Number(rate_dohiem.value)
+    },
+    size: JSON.parse(size.value || "[]"),
+    des: des.value,
+    images: [],
+    createdAt: new Date()
+  };
+
+  if (!product.id || !product.name || !product.price) {
+    alert("Thiếu thông tin cơ bản!");
+    return;
+  }
+
+  /* ===== UPLOAD IMAGES ===== */
+  try {
+    for (let i = 0; i < files.length && i < 5; i++) {
+      const fileRef = ref(
+        storage,
+        `products/${product.id}/${Date.now()}_${files[i].name}`
+      );
+      const snap = await uploadBytes(fileRef, files[i]);
+      const url = await getDownloadURL(snap.ref);
+      product.images.push(url);
+    }
+
+    /* ===== SAVE PRODUCT ===== */
+    await addDoc(collection(db, "products"), product);
+
+    alert("Đã lưu sản phẩm thành công!");
+    location.reload();
+  } catch (err) {
+    console.error(err);
+    alert("Lỗi upload sản phẩm!");
+  }
+};
 loadTemplatesFromFirebase();
 </script>
 
