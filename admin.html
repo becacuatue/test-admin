@@ -1,171 +1,209 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>Admin Upload Sản Phẩm</title>
+<meta charset="UTF-8" />
+<title>Admin – Product Manager</title>
 
 <style>
-body { font-family: Arial; padding: 20px; }
-.section-box { border: 1px solid #ccc; padding: 10px; border-radius: 6px; margin: 10px 0; }
-#dropzone { width: 100%; padding: 30px; border: 2px dashed #999; text-align: center; }
-.preview img { width: 120px; margin: 5px; border-radius: 8px; }
-input, textarea { width: 100%; margin-top: 10px; padding: 8px; }
-.row { display: flex; gap: 10px; }
-.row input { flex: 1; }
-button { padding: 10px 15px; margin-top: 10px; cursor: pointer; }
-.primary { background:#111;color:#fff;border-radius:6px }
-.primary:hover { background:#000 }
+body { font-family: Arial; padding: 20px; background:#f7f7f7 }
+h2 { margin-bottom: 10px }
+.section { background:#fff; padding:15px; border-radius:8px; margin-bottom:15px }
+button { padding:8px 12px; border-radius:6px; border:none; cursor:pointer }
+button.primary { background:#111; color:#fff }
+.toggle-group { display:flex; flex-wrap:wrap; gap:8px }
+.toggle {
+  padding:6px 12px;
+  border:1px solid #ccc;
+  border-radius:20px;
+  cursor:pointer;
+  background:#f5f5f5;
+}
+.toggle.active {
+  background:#111;
+  color:#fff;
+  border-color:#111;
+}
+#dropzone {
+  border:2px dashed #999;
+  padding:25px;
+  text-align:center;
+  margin-bottom:10px;
+}
+.preview img {
+  width:100px;
+  border-radius:8px;
+  margin-right:8px;
+}
+input, textarea { width:100%; padding:8px; margin-top:8px }
+.row { display:flex; gap:10px }
 </style>
 </head>
 
 <body>
+
 <h2>ADMIN – UPLOAD SẢN PHẨM</h2>
-<div id="dropzone">Kéo thả ảnh (tối đa 5)</div>
-<div class="preview" id="preview"></div>
 
-<input id="id" placeholder="ID sản phẩm (vd: 36)">
-<input id="name" placeholder="Tên sản phẩm">
-<input id="price" type="number" placeholder="Giá">
-
-<div class="section-box">
-<h4>Brand (cách nhau bằng dấu ,)</h4>
-<input id="brandInput" placeholder="Nike, Adidas">
+<div class="section">
+  <div id="dropzone">Kéo thả ảnh (tối đa 5)</div>
+  <div class="preview" id="preview"></div>
 </div>
 
-<div class="section-box">
-<h4>Tags</h4>
-<input id="tagInput" placeholder="Áo, Giày">
+<div class="section">
+  <input id="pid" placeholder="ID sản phẩm">
+  <input id="pname" placeholder="Tên sản phẩm">
+  <input id="price" type="number" placeholder="Giá">
 </div>
 
-<div class="section-box">
-<h4>Subtags</h4>
-<input id="subtagInput" placeholder="Jordan 1, Puffer">
+<div class="section">
+  <h4>Brand</h4>
+  <div id="brandBox" class="toggle-group"></div>
 </div>
 
-<div class="section-box">
-<h4>Materials</h4>
-<div class="row">
-<input id="materialName" placeholder="Cotton">
-<input id="materialValue" type="number" placeholder="%">
-</div>
-<button onclick="addMaterial()">Thêm Material</button>
-<div id="materialList"></div>
+<div class="section">
+  <h4>Tags</h4>
+  <div id="tagBox" class="toggle-group"></div>
 </div>
 
-<div class="section-box">
-<h4>Ratings</h4>
-<input id="rate_doben" type="number" value="8" placeholder="Độ bền">
-<input id="rate_chatluong" type="number" value="8" placeholder="Chất lượng">
-<input id="rate_tuongdong" type="number" value="8" placeholder="Tương đồng">
-<input id="rate_dohiem" type="number" value="7" placeholder="Độ hiếm">
+<div class="section">
+  <h4>Subtags</h4>
+  <div id="subtagBox" class="toggle-group"></div>
 </div>
 
-<input id="size" placeholder='Size ["S","M","L","XL"]'>
-<textarea id="des" rows="5" placeholder="Mô tả"></textarea>
+<div class="section">
+  <h4>Size</h4>
+  <div id="sizeBox" class="toggle-group"></div>
+</div>
+
+<div class="section">
+  <h4>Materials</h4>
+  <div id="materialBox" class="toggle-group"></div>
+</div>
+
+<div class="section">
+  <textarea id="des" rows="5" placeholder="Mô tả"></textarea>
+</div>
 
 <button id="save" class="primary">LƯU SẢN PHẨM</button>
-<button onclick="logout()">Đăng xuất</button>
 
-<script>
-/* ===== IMAGE HANDLER ===== */
-let files=[];
-dropzone.ondragover=e=>e.preventDefault();
-dropzone.ondrop=e=>{
- e.preventDefault();
- files=[...e.dataTransfer.files].slice(0,5);
- preview.innerHTML="";
- files.forEach(f=>{
-   let img=document.createElement("img");
-   img.src=URL.createObjectURL(f);
-   preview.appendChild(img);
- });
-};
-
-/* ===== MATERIAL ===== */
-let materials=[];
-function addMaterial(){
- let n=materialName.value.trim();
- let v=Number(materialValue.value);
- if(!n||!v) return;
- materials.push({name:n,value:v});
- renderMaterial();
- materialName.value="";
- materialValue.value="";
-}
-function renderMaterial(){
- materialList.innerHTML="";
- materials.forEach(m=>{
-   materialList.innerHTML+=`<div>${m.name}: ${m.value}%</div>`;
- });
-}
-</script>
-
-<!-- ===== FIREBASE ===== -->
 <script type="module">
+/* ===== FIREBASE ===== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-import { getAuth,onAuthStateChanged,signOut } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
-import { getFirestore,collection,addDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
-import { getStorage,ref,uploadBytes,getDownloadURL } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-storage.js";
+import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-storage.js";
 
 const firebaseConfig = {
- apiKey: "AIzaSyBdEuAqxHxHaxE3lTCEOwH2YO8L2Jg4hlY",
- authDomain: "dtorder-19c91.firebaseapp.com",
- projectId: "dtorder-19c91",
- storageBucket: "dtorder-19c91.appspot.com",
- messagingSenderId: "499125096462",
- appId: "1:499125096462:web:5fc0f37019e018fd57ac5f"
+  apiKey: "AIzaSyBdEuAqxHxHaxE3lTCEOwH2YO8L2Jg4hlY",
+  authDomain: "dtorder-19c91.firebaseapp.com",
+  projectId: "dtorder-19c91",
+  storageBucket: "dtorder-19c91.appspot.com",
+  messagingSenderId: "499125096462",
+  appId: "1:499125096462:web:5fc0f37019e018fd57ac5f"
 };
 
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
-const storage=getStorage(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
 
-onAuthStateChanged(auth,u=>{
- if(!u) location.href="admin_login.html";
-});
+/* ===== UTILS ===== */
+const uniq = arr => [...new Set(arr)];
 
-window.logout=()=>signOut(auth).then(()=>location.href="admin_login.html");
+function renderToggle(list, boxId) {
+  const box = document.getElementById(boxId);
+  box.innerHTML = "";
+  list.forEach(v => {
+    const btn = document.createElement("div");
+    btn.className = "toggle";
+    btn.textContent = v;
+    btn.onclick = () => btn.classList.toggle("active");
+    box.appendChild(btn);
+  });
+}
 
-document.getElementById("save").onclick=async()=>{
- if(!files.length) return alert("Chưa có ảnh");
+function getSelected(boxId) {
+  return [...document.querySelectorAll(`#${boxId} .toggle.active`)]
+    .map(b => b.textContent);
+}
 
- const product={
-   id:id.value.trim(),
-   name:name.value.trim(),
-   price:Number(price.value),
-   brand:brandInput.value.split(",").map(v=>v.trim()).filter(Boolean),
-   tags:tagInput.value.split(",").map(v=>v.trim()).filter(Boolean),
-   subtags:subtagInput.value.split(",").map(v=>v.trim()).filter(Boolean),
-   materials,
-   ratings:{
-     doben:+rate_doben.value,
-     chatluong:+rate_chatluong.value,
-     tuongdong:+rate_tuongdong.value,
-     dohiem:+rate_dohiem.value
-   },
-   size:JSON.parse(size.value||"[]"),
-   des:des.value,
-   images:[],
-   createdAt:new Date()
- };
+/* ===== LOAD OPTIONS FROM PRODUCTS ===== */
+async function loadOptions() {
+  const snap = await getDocs(collection(db, "products"));
 
- try{
-   for(let f of files){
-     let r=ref(storage,`products/${product.id}/${Date.now()}_${f.name}`);
-     let snap=await uploadBytes(r,f);
-     product.images.push(await getDownloadURL(snap.ref));
-   }
+  let brands=[], tags=[], subtags=[], sizes=[], materials=[];
 
-   await addDoc(collection(db,"products"),product);
-   alert("LƯU THÀNH CÔNG");
-   location.reload();
- }catch(e){
-   console.error(e);
-   alert("LỖI UPLOAD");
- }
+  snap.forEach(d => {
+    const p = d.data();
+    brands.push(...(p.brand||[]));
+    tags.push(...(p.tags||[]));
+    subtags.push(...(p.subtags||[]));
+    sizes.push(...(p.size||[]));
+    (p.materials||[]).forEach(m => materials.push(m.name));
+  });
+
+  renderToggle(uniq(brands), "brandBox");
+  renderToggle(uniq(tags), "tagBox");
+  renderToggle(uniq(subtags), "subtagBox");
+  renderToggle(uniq(sizes), "sizeBox");
+  renderToggle(uniq(materials), "materialBox");
+}
+
+loadOptions();
+
+/* ===== IMAGE DROP ===== */
+let files=[];
+const dropzone=document.getElementById("dropzone");
+const preview=document.getElementById("preview");
+
+dropzone.ondragover=e=>e.preventDefault();
+dropzone.ondrop=e=>{
+  e.preventDefault();
+  files=[...e.dataTransfer.files].slice(0,5);
+  preview.innerHTML="";
+  files.forEach(f=>{
+    const img=document.createElement("img");
+    img.src=URL.createObjectURL(f);
+    preview.appendChild(img);
+  });
+};
+
+/* ===== SAVE PRODUCT ===== */
+document.getElementById("save").onclick = async () => {
+  const pidEl = document.getElementById("pid");
+  const nameEl = document.getElementById("pname");
+  const priceEl = document.getElementById("price");
+
+  if (!pidEl.value || !nameEl.value || !priceEl.value) {
+    alert("Thiếu thông tin cơ bản");
+    return;
+  }
+
+  const product = {
+    id: pidEl.value.trim(),
+    name: nameEl.value.trim(),
+    price: Number(priceEl.value),
+    brand: getSelected("brandBox"),
+    tags: getSelected("tagBox"),
+    subtags: getSelected("subtagBox"),
+    size: getSelected("sizeBox"),
+    materials: getSelected("materialBox").map(m=>({name:m,val:100})),
+    images: [],
+    des: des.value,
+    createdAt: new Date()
+  };
+
+  try {
+    for (let f of files) {
+      const rf = ref(storage, `products/${product.id}/${Date.now()}_${f.name}`);
+      const snap = await uploadBytes(rf, f);
+      product.images.push(await getDownloadURL(snap.ref));
+    }
+    await addDoc(collection(db,"products"),product);
+    alert("LƯU THÀNH CÔNG");
+    location.reload();
+  } catch(e){
+    console.error(e);
+    alert("LỖI FIREBASE");
+  }
 };
 </script>
 </body>
 </html>
-
