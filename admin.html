@@ -44,7 +44,7 @@ input, textarea { width:100%; padding:8px; margin-top:8px }
 <h2>ADMIN – UPLOAD SẢN PHẨM</h2>
 
 <div class="section">
-  <div id="dropzone">Kéo thả ảnh (tối đa 5)</div>
+  <div id="dropzone">Kéo thả ảnh (tối đa 10)</div>
   <div id="preview" class="preview"></div>
 </div>
 
@@ -84,10 +84,30 @@ input, textarea { width:100%; padding:8px; margin-top:8px }
 
 <div class="section">
   <h4>Materials</h4>
-  <input placeholder="Nhập chất liệu và Enter"
-         onkeydown="addOption(event,'materialBox')">
-  <div id="materialBox" class="toggle-group"></div>
+
+  <div id="materialInputs"></div>
+
+  <button onclick="addMaterialRow()" type="button">
+    + Thêm vật liệu
+  </button>
 </div>
+<div class="section">
+  <h4>Ratings</h4>
+
+  <label>Độ bền</label>
+  <input id="rate_doben" type="number" step="0.1" placeholder="VD: 9">
+
+  <label>Chất lượng</label>
+  <input id="rate_chatluong" type="number" step="0.1" placeholder="VD: 8.5">
+
+  <label>Tương đồng</label>
+  <input id="rate_tuongdong" type="number" step="0.1" placeholder="VD: 8.25">
+
+  <label>Độ hiếm</label>
+  <input id="rate_dohiem" type="number" step="0.1" placeholder="VD: 7">
+</div>
+
+
 
 <div class="section">
   <textarea id="des" rows="4" placeholder="Mô tả sản phẩm"></textarea>
@@ -96,6 +116,51 @@ input, textarea { width:100%; padding:8px; margin-top:8px }
 <button class="primary" id="save">LƯU SẢN PHẨM</button>
 
 <script type="module">
+  /* ================= MATERIAL INPUT ================= */
+
+const materialBox = document.getElementById("materialInputs");
+
+window.addMaterialRow = () => {
+  const row = document.createElement("div");
+  row.style.display = "flex";
+  row.style.gap = "8px";
+  row.style.marginBottom = "6px";
+
+  row.innerHTML = `
+    <input placeholder="Tên vật liệu" style="flex:2">
+    <input type="number" placeholder="%" style="flex:1">
+    <button type="button">✕</button>
+  `;
+
+  row.querySelector("button").onclick = () => row.remove();
+
+  materialBox.appendChild(row);
+};
+addMaterialRow();
+
+function getMaterialsObject() {
+  const materials = {};
+  [...materialBox.children].forEach(row => {
+    const [nameEl, percentEl] = row.querySelectorAll("input");
+    const name = nameEl.value.trim();
+    const percent = Number(percentEl.value);
+
+    if (name && !isNaN(percent)) {
+      materials[name] = percent;
+    }
+  });
+  return materials;
+}
+function getRatingsObject() {
+  return {
+    "Độ bền": Number(document.getElementById("rate_doben").value) || 0,
+    "Chất Lượng": Number(document.getElementById("rate_chatluong").value) || 0,
+    "Tương đồng": Number(document.getElementById("rate_tuongdong").value) || 0,
+    "Độ Hiếm": Number(document.getElementById("rate_dohiem").value) || 0
+  };
+}
+
+
 /* ================= FIREBASE ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
@@ -180,7 +245,7 @@ const preview=document.getElementById("preview");
 dropzone.ondragover=e=>e.preventDefault();
 dropzone.ondrop=e=>{
   e.preventDefault();
-  files=[...e.dataTransfer.files].slice(0,5);
+  files=[...e.dataTransfer.files].slice(0,10);
   preview.innerHTML="";
   files.forEach(f=>{
     const img=document.createElement("img");
@@ -214,10 +279,8 @@ document.getElementById("save").onclick = async () => {
     tags: getSelected("tagBox"),
     subtags: getSelected("subtagBox"),
     size: getSelected("sizeBox"),
-    materials: getSelected("materialBox").map(m => ({
-      name: m,
-      val: 100
-    })),
+    materials: getMaterialsObject(),
+    ratings: getRatingsObject(),
     images: [],
     des: desEl.value,
     createdAt: new Date()
