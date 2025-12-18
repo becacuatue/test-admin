@@ -13,6 +13,17 @@
 <div class="section">
   <div id="dropzone">Kéo thả ảnh (tối đa 10)</div>
   <div id="preview" class="preview"></div>
+  <input
+    type="file"
+    id="fileInput"
+    accept="image/*"
+    multiple
+    style="display:none"
+  />
+
+  <button type="button" id="btnUploadMobile">
+    📷 Chọn / Chụp ảnh
+  </button>
 </div>
 
 <div class="section">
@@ -325,6 +336,25 @@ function renderPreview() {
     preview.appendChild(wrapper);
   });
 }
+const fileInput = document.getElementById("fileInput");
+const btnUploadMobile = document.getElementById("btnUploadMobile");
+
+btnUploadMobile.onclick = () => {
+  fileInput.click();
+};
+
+fileInput.onchange = () => {
+  const selected = [...fileInput.files]
+    .filter(f => f.type.startsWith("image/"));
+
+  for (const file of selected) {
+    if (files.length >= 10) break;
+    files.push(file);
+  }
+
+  fileInput.value = "";
+  renderPreview();
+};
 
 
 
