@@ -3,40 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <title>Admin – Product Manager</title>
-
-<style>
-body { font-family: Arial; padding:20px; background:#f7f7f7 }
-h2 { margin-bottom:10px }
-.section { background:#fff; padding:15px; border-radius:8px; margin-bottom:15px }
-button { padding:10px 14px; border-radius:6px; border:none; cursor:pointer }
-button.primary { background:#111; color:#fff }
-.toggle-group { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px }
-.toggle {
-  padding:6px 14px;
-  border:1px solid #ccc;
-  border-radius:20px;
-  cursor:pointer;
-  background:#f5f5f5;
-  user-select:none;
-}
-.toggle.active {
-  background:#111;
-  color:#fff;
-  border-color:#111;
-}
-#dropzone {
-  border:2px dashed #999;
-  padding:30px;
-  text-align:center;
-  margin-bottom:10px;
-}
-.preview img {
-  width:90px;
-  border-radius:8px;
-  margin-right:8px;
-}
-input, textarea { width:100%; padding:8px; margin-top:8px }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -159,13 +126,29 @@ function getRatingsObject() {
     "Độ Hiếm": Number(document.getElementById("rate_dohiem").value) || 0
   };
 }
-
-
-/* ================= FIREBASE ================= */
+/* ================= FIREBASE ADMIN ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-storage.js";
+import { 
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  setDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+import {
+  getAuth,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-storage.js";
 
+/* ===== CONFIG ===== */
 const firebaseConfig = {
   apiKey: "AIzaSyBdEuAqxHxHaxE3lTCEOwH2YO8L2Jg4hlY",
   authDomain: "dtorder-19c91.firebaseapp.com",
@@ -175,9 +158,50 @@ const firebaseConfig = {
   appId: "1:499125096462:web:5fc0f37019e018fd57ac5f"
 };
 
+/* ===== INIT ===== */
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 const storage = getStorage(app);
+
+/* ===== ADMIN CHECK ===== */
+let currentAdmin = null;
+
+onAuthStateChanged(auth, (user) => {
+  if (!user || user.email !== "becacuatue@gmail.com") {
+    alert("Bạn không có quyền admin");
+    window.location.href = "admin_login.html";
+    return;
+  }
+
+  currentAdmin = user;
+  console.log("Admin logged in:", user.email);
+});
+
+/* ===== ADD DATA (Firestore) ===== */
+export async function addProduct(data) {
+  if (!currentAdmin) throw new Error("Chưa đăng nhập admin");
+
+  return await addDoc(collection(db, "products"), {
+    ...data,
+    createdBy: currentAdmin.uid,
+    createdAt: serverTimestamp()
+  });
+}
+
+/* ===== UPLOAD IMAGE (Storage) ===== */
+export async function uploadImage(file) {
+  if (!currentAdmin) throw new Error("Chưa đăng nhập admin");
+
+  const imageRef = ref(
+    storage,
+    `products/${currentAdmin.uid}/${Date.now()}_${file.name}`
+  );
+
+  await uploadBytes(imageRef, file);
+  return await getDownloadURL(imageRef);
+}
+
 
 /* ================= TOGGLE UTILS ================= */
 function createToggle(boxId, value) {
@@ -226,7 +250,9 @@ async function loadOptions() {
     tags.push(...(p.tags||[]));
     subtags.push(...(p.subtags||[]));
     sizes.push(...(p.size||[]));
-    (p.materials||[]).forEach(m=>materials.push(m.name));
+    if (p.materials && typeof p.materials === "object" && p.materials.name) {
+      materials.push(p.materials.name);
+    }
   });
 
   uniq(brands).forEach(v=>createToggle("brandBox",v));
@@ -236,23 +262,71 @@ async function loadOptions() {
   uniq(materials).forEach(v=>createToggle("materialBox",v));
 }
 loadOptions();
+/* ================= IMAGE DROP + SORT + DELETE ================= */
+let files = [];
 
-/* ================= IMAGE DROP ================= */
-let files=[];
-const dropzone=document.getElementById("dropzone");
-const preview=document.getElementById("preview");
+const dropzone = document.getElementById("dropzone");
+const preview  = document.getElementById("preview");
 
-dropzone.ondragover=e=>e.preventDefault();
-dropzone.ondrop=e=>{
+dropzone.ondragover = e => e.preventDefault();
+
+dropzone.ondrop = e => {
   e.preventDefault();
-  files=[...e.dataTransfer.files].slice(0,10);
-  preview.innerHTML="";
-  files.forEach(f=>{
-    const img=document.createElement("img");
-    img.src=URL.createObjectURL(f);
-    preview.appendChild(img);
-  });
+
+  const newFiles = [...e.dataTransfer.files]
+    .filter(f => f.type.startsWith("image/"));
+
+  for (const file of newFiles) {
+    if (files.length >= 10) break;
+    files.push(file);
+  }
+
+  renderPreview();
 };
+
+function renderPreview() {
+  preview.innerHTML = "";
+
+  files.forEach((file, index) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "img-box";
+    wrapper.draggable = true;
+    wrapper.dataset.index = index;
+
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+
+    const del = document.createElement("button");
+    del.innerHTML = "✕";
+    del.onclick = () => {
+      files.splice(index, 1);
+      renderPreview();
+    };
+
+    // drag sort
+    wrapper.ondragstart = e => {
+      e.dataTransfer.setData("from", index);
+    };
+
+    wrapper.ondragover = e => e.preventDefault();
+
+    wrapper.ondrop = e => {
+      e.preventDefault();
+      const from = e.dataTransfer.getData("from");
+      if (from == index) return;
+
+      const moved = files.splice(from, 1)[0];
+      files.splice(index, 0, moved);
+      renderPreview();
+    };
+
+    wrapper.appendChild(img);
+    wrapper.appendChild(del);
+    preview.appendChild(wrapper);
+  });
+}
+
+
 
 /* ================= SAVE PRODUCT ================= */
 document.getElementById("save").onclick = async () => {
