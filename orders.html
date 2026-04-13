@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - Quản lý Đơn hàng</title>
+    <link rel="stylesheet" href="admin-style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <header>
+            <h1>Hệ Thống Quản Trị Đơn Hàng</h1>
+            <div id="adminInfo">Admin: <span id="adminEmail">...</span></div>
+        </header>
+        <div class="admin-fab" onclick="window.location.href='admin.html'">
+            <span>ADMIN</span>
+        </div>
+        <section class="stats-overview">
+            <div class="stat-card">
+                <h3>Doanh thu tháng này</h3>
+                <p id="monthRevenue">0 VNĐ</p>
+            </div>
+            <div class="stat-card">
+                <h3>Đơn hàng mới</h3>
+                <p id="newOrdersCount">0</p>
+            </div>
+        </section>
+
+        <div id="monthTabs" class="tabs-container">
+            </div>
+
+        <section class="chart-section">
+            <canvas id="revenueChart"></canvas>
+        </section>
+
+        <section class="orders-section">
+            <h2>Danh sách đơn hàng</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Khách hàng (Email)</th>
+                            <th>Ngày đặt</th>
+                            <th>Sản phẩm</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderTableBody">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script type="module" src="admin-script.js"></script>
+</body>
+</html>

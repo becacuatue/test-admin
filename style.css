@@ -55,3 +55,21 @@ button.primary { background:#111; color:#fff }
   border-color:#111;
 }
 input, textarea { width:100%; padding:8px; margin-top:8px }
+.admin-fab {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #2c3e50;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 1000;
+    font-weight: bold;
+}
+
+.admin-fab:hover {
+    transform: scale(1.05);
+    background: #34495e;
+}
